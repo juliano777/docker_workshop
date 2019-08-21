@@ -1,7 +1,6 @@
 **Links Úteis**:
 
-- [GitHub do Curso "Docker Unleashed"- by Gabriel Abdalla]
-(https://github.com/gcavalcante8808/docker-unleashed)
+- [GitHub do Curso "Docker Unleashed"- by Gabriel Abdalla](https://github.com/gcavalcante8808/docker-unleashed)
 - [Docker Unleashed - Versão Web](https://docker-unleashed.readthedocs.io)
 
 * * *
