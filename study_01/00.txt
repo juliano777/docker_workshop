@@ -82,6 +82,10 @@ docker container update -m 256M foo
 
 docker image ls
 
+Dockerfile  LABEL app="fdfdfdf"
+
+
+
 
 
 
