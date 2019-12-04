@@ -1,0 +1,103 @@
+docker container run -ti hello-world
+
+# Cria e executa o entrypoint:
+docker container run -it ubuntu
+<Ctrl> + D
+
+Matou o container...
+
+docker container run -it centos
+
+<Ctrl> + P + Q
+
+docker container ls
+
+Ainda está em execução! :)
+
+
+# Voltar para o contêiner em execução
+
+docker container attach <id ou nome>
+
+
+# Shell preso, pois não tem um shell em cmd ou entrypoint
+docker container run -it nginx
+
+
+# Modo daemon
+docker container run -d nginx
+
+
+docker container {start stop restart pause unpause}
+
+docker container inspect
+
+docker container update
+
+
+docker container logs
+
+
+docker container rm (-f)
+
+
+docker container stats
+
+# dentro do contâiner
+aptitude install stress
+
+
+docker container top
+
+
+docker container run -d -m 128M --name foo nginx
+
+docker container inspect foo | fgrep '"Memory": '
+            "Memory": 134217728,
+
+# bytes -> kbytes -> megabytes
+echo '134217728/1024/1024' | bc
+
+128
+
+
+docker exec -it foo apt update
+
+docker exec -it foo apt install -y stress
+
+# Acompanhar em outro terminal com 
+# docker container stats foo
+
+docker exec -it foo stress --vm 1 --vm-bytes 115M
+stress: info: [302] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
+
+docker exec -it foo stress --vm 1 --vm-bytes 125M
+stress: info: [309] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
+stress: FAIL: [309] (415) <-- worker 315 got signal 9
+stress: WARN: [309] (417) now reaping child worker processes
+stress: FAIL: [309] (451) failed run completed in 0s
+
+
+docker container update -m 256M foo
+
+docker image ls
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
