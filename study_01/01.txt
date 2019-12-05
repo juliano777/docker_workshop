@@ -1,0 +1,143 @@
+# Volumes ====================================================================
+
+
+# bind and tmpfs -------------------------------------------------------------
+
+mkdir -p /opt/volumes/foo
+
+docker container run -itd --name testevolume \
+    --mount type=bind,src=/opt/volumes/foo,dst=/foo,ro \
+    --mount type=tmpfs,dst=/tmp,tmpfs-mode=1777,tmpfs-size=256M \
+    alpine
+
+
+echo 'vini vidi vici' > /opt/volumes/foo/phrase.txt
+
+
+docker container exec -it testevolume cat /foo/phrase.txt
+
+vini vidi vici
+
+docker container exec -it testevolume rm -f /foo/phrase.txt
+rm: can't remove '/foo/phrase.txt': Read-only file system
+
+
+
+docker container exec -it testevolume df -h | fgrep '/tmp'
+
+tmpfs                   256.0M         0    256.0M   0% /tmp
+
+
+# ----------------------------------------------------------------------------
+
+# volume ---------------------------------------------------------------------
+
+docker volume create vol_foo
+
+
+docker volume ls
+DRIVER              VOLUME NAME
+local               vol_foo
+
+
+docker volume inspect vol_foo 
+[
+    {
+        "CreatedAt": "2019-12-05T11:48:00-02:00",
+        "Driver": "local",
+        "Labels": {},
+        "Mountpoint": "/var/lib/docker/volumes/vol_foo/_data",
+        "Name": "vol_foo",
+        "Options": {},
+        "Scope": "local"
+    }
+]
+
+
+touch /var/lib/docker/volumes/vol_foo/_data/{foo,bar,baz}.txt
+
+
+FILES='foo bar baz'
+
+for i in ${FILES};
+do
+    echo "This is the [ ${i}.txt ] file!" > \
+        /var/lib/docker/volumes/vol_foo/_data/${i}.txt;
+   cat /var/lib/docker/volumes/vol_foo/_data/${i}.txt
+done
+
+This is the [ foo.txt ] file!
+This is the [ bar.txt ] file!
+This is the [ baz.txt ] file!
+
+
+docker container ls
+
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+e68578086872        alpine              "/bin/sh"           2 hours ago         Up 2 hours                              testevolume
+
+
+docker container rm -f testevolume
+
+
+
+docker container run -itd --name testevolume \
+    --mount type=volume,src=vol_foo,dst=/foo \
+    alpine
+
+
+
+docker container exec -it testevolume ls /foo/
+bar.txt  baz.txt  foo.txt
+
+
+docker container exec -it testevolume sh
+
+rm -fv /foo/*
+removed '/foo/bar.txt'
+removed '/foo/baz.txt'
+removed '/foo/foo.txt'
+
+
+echo 'AEIOU' > /foo/vowels.txt
+
+<Ctrl> + D
+
+docker rm -f testevolume
+
+
+cat /var/lib/docker/volumes/vol_foo/_data/vowels.txt 
+AEIOU
+
+
+docker container run -itd --name testevolume \
+    --mount type=volume,src=vol_foo,dst=/foo \
+    alpine
+
+
+docker container exec -it testevolume cat /foo/vowels.txt
+AEIOU
+
+<Ctrl> + D
+
+
+docker rm -f testevolume
+
+
+docker volume rm vol_foo
+
+
+docker volume create vol_teste
+
+docker volume prune 
+WARNING! This will remove all local volumes not used by at least one container.
+Are you sure you want to continue? [y/N]
+
+N
+
+
+docker volume prune -f
+Deleted Volumes:
+vol_teste
+
+Total reclaimed space: 0B

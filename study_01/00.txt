@@ -82,26 +82,13 @@ docker container update -m 256M foo
 
 docker image ls
 
-Dockerfile  LABEL app="fdfdfdf"
+Dockerfile
+LABEL app="fdfdfdf"
 
+docker container create
 
+docker container prune
 
+docker image prune
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+docker run --restart=always

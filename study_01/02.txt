@@ -1,0 +1,170 @@
+# Docker Swarm ===============================================================
+
+[docker-01]
+$ docker swarm init --advertise-addr 192.168.56.10
+
+
+Swarm initialized: current node (miq1rbz0k2l6o7fd4q2p7tumc) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2nsxaixyyggl5egoroubrdub1gjxzqfmvwieariidxr2gz0397-5kc236mg05urdi5rtvq2p4bpa 192.168.56.10:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+$ docker node ls
+
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+miq1rbz0k2l6o7fd4q2p7tumc *   docker-01.local     Ready               Active              Leader              18.09.1
+
+
+
+docker swarm join-token worker
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2nsxaixyyggl5egoroubrdub1gjxzqfmvwieariidxr2gz0397-5kc236mg05urdi5rtvq2p4bpa 192.168.56.10:2377
+
+docker swarm join-token manager 
+To add a manager to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2nsxaixyyggl5egoroubrdub1gjxzqfmvwieariidxr2gz0397-f3kup4gisc8dmzj8e8sa7egxc 192.168.56.10:2377
+
+
+[docker-02][docker-03]
+
+docker swarm join --token SWMTKN-1-2nsxaixyyggl5egoroubrdub1gjxzqfmvwieariidxr2gz0397-5kc236mg05urdi5rtvq2p4bpa 192.168.56.10:2377
+
+[docker-01]
+
+$ docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+miq1rbz0k2l6o7fd4q2p7tumc *   docker-01.local     Ready               Active              Leader              18.09.1
+hfetwywc3tidudki0t147p5w9     docker-02.local     Ready               Active                                  18.09.1
+kaecypw8c1vgzchuh4a72hps0     docker-03.local     Ready               Active                                  18.09.1
+
+docker node promote docker-03.local 
+Node docker-03.local promoted to a manager in the swarm.
+
+docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+miq1rbz0k2l6o7fd4q2p7tumc *   docker-01.local     Ready               Active              Leader              18.09.1
+hfetwywc3tidudki0t147p5w9     docker-02.local     Ready               Active                                  18.09.1
+kaecypw8c1vgzchuh4a72hps0     docker-03.local     Ready               Active              Reachable           18.09.1
+
+
+docker node demote docker-03.local 
+Manager docker-03.local demoted in the swarm.
+
+$ docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+miq1rbz0k2l6o7fd4q2p7tumc *   docker-01.local     Ready               Active              Leader              18.09.1
+hfetwywc3tidudki0t147p5w9     docker-02.local     Ready               Active                                  18.09.1
+kaecypw8c1vgzchuh4a72hps0     docker-03.local     Ready               Active                                  18.09.1
+
+$ docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+miq1rbz0k2l6o7fd4q2p7tumc *   docker-01.local     Ready               Active              Leader              18.09.1
+hfetwywc3tidudki0t147p5w9     docker-02.local     Down                Active                                  18.09.1
+pcjc14t6aklii9v27odecwvrf     docker-02.local     Ready               Active              Reachable           18.09.1
+kaecypw8c1vgzchuh4a72hps0     docker-03.local     Ready               Active              Reachable           18.09.1
+
+
+docker node rm hfetwywc3tidudki0t147p5w9
+
+
+$ docker swarm join-token --rotate manager 
+Successfully rotated manager join token.
+
+To add a manager to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2nsxaixyyggl5egoroubrdub1gjxzqfmvwieariidxr2gz0397-csgq2jz8iwhfh7255hvmikfdo 192.168.56.10:2377
+
+# Service
+
+docker service create --name webserver --replicas 3 -p 8080:80 nginx
+
+$ docker service ps webserver webserver 
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS
+k4ilr5dp6u5e        webserver.1         nginx:latest        docker-03.local     Running             Running about a minute ago                       
+pihupesoalpz        webserver.2         nginx:latest        docker-02.local     Running             Running about a minute ago                       
+9uxsltbl29ev        webserver.3         nginx:latest        docker-01.local     Running             Running 2 minutes ago 
+
+$ docker node update --availability pause docker-02.local
+
+$ docker service scale webserver=10
+
+$ docker node update --availability active docker-02.local
+
+$ docker service scale webserver=10
+
+$ docker node update --availability drain docker-02.local
+
+$ docker node update --availability active docker-02.local
+
+docker service rm webserver
+
+docker service create --name ws --replicas 3 -p 8080:80 nginx
+
+$ docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+pr1j54dghtmp        ws                  replicated          3/3                 nginx:latest        *:8080->80/tcp
+
+$ docker service inspect --pretty ws 
+
+ID:		pr1j54dghtmp8g9nq3m0uw8mm
+Name:		ws
+Service Mode:	Replicated
+ Replicas:	3
+Placement:
+UpdateConfig:
+ Parallelism:	1
+ On failure:	pause
+ Monitoring Period: 5s
+ Max failure ratio: 0
+ Update order:      stop-first
+RollbackConfig:
+ Parallelism:	1
+ On failure:	pause
+ Monitoring Period: 5s
+ Max failure ratio: 0
+ Rollback order:    stop-first
+ContainerSpec:
+ Image:		nginx:latest@sha256:50cf965a6e08ec5784009d0fccb380fc479826b6e0e65684d9879170a9df8566
+ Init:		false
+Resources:
+Endpoint Mode:	vip
+Ports:
+ PublishedPort = 8080
+  Protocol = tcp
+  TargetPort = 80
+  PublishMode = ingress 
+
+$ docker service scale ws=10
+
+$ docker service logs -f ws
+
+docker service rm ws
+
+
+docker volume prune -f
+
+
+docker volume create vol_www
+
+echo 'Vini vidi vici' > /var/lib/docker/volumes/vol_www/_data/index.html
+
+
+docker service create --name ws --replicas 3 -p 8080:80 --mount type=volume,src=vol_www,dst=/usr/share/nginx/html nginx
+
+
+curl docker-01.local:8080
+
+No sync! :( 
+
+
+
+
+
+
+

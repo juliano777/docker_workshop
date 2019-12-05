@@ -1,0 +1,65 @@
+LABEL description='bla bla bla'
+LABEL version='0.1'
+
+COPY
+
+ADD
+
+ARG
+
+ENV
+
+USER
+
+VOLUME
+
+EXPOSE
+
+WORKDIR
+
+ENTRYPOINT
+
+CMD
+
+.dockerignore
+
+
+docker image build 
+
+docker container commit
+
+Multi Stage... como se fosse pipeline
+
+docker login
+
+hub.docker
+
+Docker Registry
+
+docker container run -itd -p 5000:5000 --restart always --name docker-registry registry:2
+
+
+docker logout
+
+
+docker image tag <image> localhost:5000/<imagem>:tag
+
+docker push localhost:5000/imagem:tag
+
+https://docs.docker.com/registry/deploying/
+
+
+curl localhost:5000/v2/_catalog
+{"repositories":["alpine"]}
+
+
+curl localhost:5000/v2/alpine/tags/list
+{"name":"alpine","tags":["latest"]}
+
+
+# Harbour
+
+https://goharbor.io/
+
+
+
