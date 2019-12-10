@@ -49,7 +49,9 @@ ID                  NAME                IMAGE               NODE                
 qgzf12xudib9        stack_odoo_web.1    odoo:13             docker-03.local     Running             Running about a minute ago
 
 
+docker service logs stack_odoo_web
 
+docker service logs stack_odoo_db
 
 
 
