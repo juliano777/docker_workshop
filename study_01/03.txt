@@ -1,0 +1,45 @@
+echo 'vini vidi vici' | docker secret create secret00 -
+
+qxf5ezas8do7yh9zeqcarppel
+
+
+docker secret ls
+
+ID                          NAME                DRIVER              CREATED             UPDATED
+qxf5ezas8do7yh9zeqcarppel   secret00                                20 seconds ago      20 seconds ago
+
+
+echo 'e plvribvs vnum' > secret.txt
+
+docker secret create secret01 secret.txt
+
+docker service ls | sed '1d' | awk '{print $2}' | \
+    xargs -i docker service rm {}
+
+
+docker service create --name ws -p 8000:80 --secret secret00 nginx
+
+
+docker service scale ws=3
+
+SAMPLE_CONTAINER=`docker container ls | fgrep ws | awk '{print $(NF)}'`
+
+docker exec -it ${SAMPLE_CONTAINER} cat /run/secrets/secret00
+
+vini vidi vici
+
+
+docker service update --secret-add secret01 ws
+
+
+SAMPLE_CONTAINER=`docker container ls | fgrep ws | awk '{print $(NF)}'`
+
+
+docker exec -it ${SAMPLE_CONTAINER} ls /run/secrets/
+
+secret00  secret01
+
+
+docker exec -it ${SAMPLE_CONTAINER} cat /run/secrets/secret01
+
+e plvribvs vnum

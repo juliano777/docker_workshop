@@ -155,16 +155,91 @@ docker volume create vol_www
 echo 'Vini vidi vici' > /var/lib/docker/volumes/vol_www/_data/index.html
 
 
-docker service create --name ws --replicas 3 -p 8080:80 --mount type=volume,src=vol_www,dst=/usr/share/nginx/html nginx
+docker service create --name ws1 --replicas 5 -p 8080:80 \
+    --mount type=volume,src=vol_www,dst=/usr/share/nginx/html nginx
+
+docker service create --name ws2 --replicas 5 -p 8088:80 \
+    --mount type=volume,src=vol_www,dst=/usr/share/nginx/html nginx
+
+docker service ls
+
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+if6x6glhh4kh        ws1                 replicated          5/5                 nginx:latest        *:8080->80/tcp
+fxfa7oa57tyd        ws2                 replicated          5/5                 nginx:latest        *:8088->80/tcp
 
 
 curl docker-01.local:8080
+curl docker-01.local:8088
 
 No sync! :( 
 
 
+SAMPLE_CONTAINER=`docker container ls | sed '1d' | awk '{print $(NF)}' | \
+    head -1`
 
 
+docker exec -it ${SAMPLE_CONTAINER} bash
+
+apt update && apt install -y iputils-ping && apt clean
+
+ping ws1
+
+ping: ws1: Name or service not known
+
+ping ws2
+ping: ws2: Name or service not known
 
 
+docker service update --help 
 
+docker network create -d overlay my_net_overlay
+
+
+docker service update --network-add my_net_overlay ws1
+
+docker service update --network-add my_net_overlay ws2
+
+SAMPLE_CONTAINER=`docker container ls | sed '1d' | awk '{print $(NF)}' | \
+    head -1`
+
+docker service ps ws1
+
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                 ERROR               PORTS
+tmzyx70u1ifx        ws1.1               nginx:latest        docker-01.local     Running             Running about a minute ago                        
+p1bq8g72747j         \_ ws1.1           nginx:latest        docker-01.local     Shutdown            Shutdown about a minute ago                       
+s33mzaijyguo        ws1.2               nginx:latest        docker-01.local     Running             Running about a minute ago                        
+rxgnh4ammfkv         \_ ws1.2           nginx:latest        docker-03.local     Shutdown            Shutdown about a minute ago                       
+lyhkd1hl2tut        ws1.3               nginx:latest        docker-02.local     Running             Running 51 seconds ago                            
+5muf9pdw5hqb         \_ ws1.3           nginx:latest        docker-02.local     Shutdown            Shutdown 54 seconds ago                           
+mwwhotlk83tm        ws1.4               nginx:latest        docker-03.local     Running             Running 58 seconds ago                            
+x5jwrxfp9386         \_ ws1.4           nginx:latest        docker-03.local     Shutdown            Shutdown 59 seconds ago                           
+5trtis6hd6g5        ws1.5               nginx:latest        docker-02.local     Running             Running about a minute ago                        
+jhomsejxuiqo         \_ ws1.5           nginx:latest        docker-02.local     Shutdown            Shutdown about a minute ago
+
+
+docker exec -it ${SAMPLE_CONTAINER} bash
+
+apt update && apt install -y iputils-ping && apt clean
+
+ping -c3 ws1
+
+PING ws1 (10.0.0.23) 56(84) bytes of data.
+64 bytes from 10.0.0.23 (10.0.0.23): icmp_seq=1 ttl=64 time=0.193 ms
+64 bytes from 10.0.0.23 (10.0.0.23): icmp_seq=2 ttl=64 time=0.127 ms
+64 bytes from 10.0.0.23 (10.0.0.23): icmp_seq=3 ttl=64 time=0.160 ms
+
+--- ws1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 52ms
+rtt min/avg/max/mdev = 0.127/0.160/0.193/0.026 ms
+
+
+ping ws2
+
+PING ws2 (10.0.0.32) 56(84) bytes of data.
+64 bytes from 10.0.0.32 (10.0.0.32): icmp_seq=1 ttl=64 time=0.142 ms
+64 bytes from 10.0.0.32 (10.0.0.32): icmp_seq=2 ttl=64 time=0.127 ms
+64 bytes from 10.0.0.32 (10.0.0.32): icmp_seq=3 ttl=64 time=0.133 ms
+
+--- ws2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 16ms
+rtt min/avg/max/mdev = 0.127/0.134/0.142/0.006 ms

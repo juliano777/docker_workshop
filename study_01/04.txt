@@ -1,0 +1,55 @@
+docker secret rm secret00 secret01
+Error response from daemon: rpc error: code = InvalidArgument desc = secret 'secret00' is in use by the following service: ws
+Error response from daemon: rpc error: code = InvalidArgument desc = secret 'secret01' is in use by the following service: ws
+
+docker service rm ws
+
+docker secret rm secret00 secret01
+
+mkdir docker-compose && cd docker-compose
+
+
+vim 00.yaml
+
+docker stack deploy -c 00.yaml stack_00
+
+
+docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+k29emo6ufxq1        stack_00_web        replicated          5/5                 nginx:latest        *:8000->80/tcp
+
+
+docker stack ps stack_00
+
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
+kwqzfx4mv5la        stack_00_web.1      nginx:latest        docker-02.local     Running             Running 2 minutes ago                       
+qis41a99788a        stack_00_web.2      nginx:latest        docker-03.local     Running             Running 2 minutes ago                       
+h416qin58dfo        stack_00_web.3      nginx:latest        docker-01.local     Running             Running 2 minutes ago                       
+12h5br3w7pu4        stack_00_web.4      nginx:latest        docker-02.local     Running             Running 2 minutes ago                       
+vdpwz0v0hgky        stack_00_web.5      nginx:latest        docker-01.local     Running             Running 2 minutes ago
+
+docker stack rm stack_00
+
+vim 01.yaml
+
+docker stack deploy -c 01.yaml stack_odoo
+
+docker stack ps stack_odoo 
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+qf20i139fh74        stack_odoo_db.1     postgres:12         docker-01.local     Running             Running 27 seconds ago                       
+qgzf12xudib9        stack_odoo_web.1    odoo:13             docker-03.local     Running             Running 31 seconds ago
+
+docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+fihek59dfw5b        stack_odoo_db       replicated          1/1                 postgres:12         
+1uahcggf2quf        stack_odoo_web      replicated          1/1                 odoo:13             *:8069->8069/tcp
+
+docker service ps stack_odoo_web 
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS
+qgzf12xudib9        stack_odoo_web.1    odoo:13             docker-03.local     Running             Running about a minute ago
+
+
+
+
+
+
