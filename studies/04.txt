@@ -68,3 +68,5 @@ docker node update --label-add loc='Narnia' docker-03.local
 
 docker stack ps stack_visualizer | fgrep web
 
+# https://docs.docker.com/engine/reference/commandline/service_create/#specify-service-constraints-constraint
+

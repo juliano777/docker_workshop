@@ -7,7 +7,7 @@ services:
       placement:
         constraints:
         - node.labels.loc == Narnia
-      replicas: 7
+      replicas: 3
       resources:
         limits:
           cpus: '0.3'
