@@ -1,34 +1,37 @@
 version: '3.7'
 
 services:
-  db:
-    image: postgres
-    environment:
-      POSTGRES_PASSWORD: '123'
-    ports:
-      - '5432:5432'
-    volumes:
-      - db-data:/var/lib/postgresql/data/pgdata
-    networks:
-      - net-postgres
-      
-  pgadmin4:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: 'foo@bar.xyz'
-      PGADMIN_DEFAULT_PASSWORD: '123'
-    ports:
-      - "8000:80"
+  web:
+    image: nginx
     deploy:
-      replicas: 5
-    depends_on:
-      - db
+      placement:
+        constraints:
+        - node.labels.loc == Narnia
+      replicas: 7
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 64M
+      restart_policy:
+        condition: on-failure
+    ports:
+    - '8000:8080'
     networks:
-      - net-postgres
+    - net_ws
 
-volumes:
-  db-data:
 
-networks: 
-  net-postgres:
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+    - '8080:8080'
+    volumes:
+    - '/var/run/docker.sock:/var/run/docker.sock'
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+    - net_ws
+
+networks:
+  net_ws:
     driver: overlay

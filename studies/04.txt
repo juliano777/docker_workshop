@@ -53,5 +53,18 @@ docker service logs stack_odoo_web
 
 docker service logs stack_odoo_db
 
+vim 02.yaml
 
+docker stack deploy -c 02.yaml stack_visualizer
+
+docker stack ps stack_visualizer | fgrep web
+
+. . .
+... "no suitable node (scheduling …"
+
+
+docker node update --label-add loc='Narnia' docker-02.local
+docker node update --label-add loc='Narnia' docker-03.local
+
+docker stack ps stack_visualizer | fgrep web
 
