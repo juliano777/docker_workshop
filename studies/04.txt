@@ -70,3 +70,73 @@ docker stack ps stack_visualizer | fgrep web
 
 # https://docs.docker.com/engine/reference/commandline/service_create/#specify-service-constraints-constraint
 
+
+
+
+cat << EOF | docker config create pg_hba - 
+local all all trust
+host all all 0.0.0.0/0 reject
+EOF
+
+docker config inspect -f '{{json .Spec.Data }}' pg_hba | tr -d \" | base64 -d
+
+local all all trust
+host all all 0.0.0.0/0 reject
+
+docker service create --name pglocal \
+    --hostname pglocal.mydomain \
+    --config src=pg_hba,target=/var/local/pgsql/data/pg_hba.conf \
+    --publish 15432:5432 \
+    juliano777/postgres
+
+
+sudo dnf install -y fuse-sshfs && dnf clean all    
+
+
+docker plugin install vieux/sshfs
+
+Plugin "vieux/sshfs" is requesting the following privileges:
+ - network: [host]
+ - mount: [/var/lib/docker/plugins/]
+ - mount: []
+ - device: [/dev/fuse]
+ - capabilities: [CAP_SYS_ADMIN]
+Do you grant the above permissions? [y/N] y
+
+latest: Pulling from vieux/sshfs
+52d435ada6a4: Download complete 
+Digest: sha256:1d3c3e42c12138da5ef7873b97f7f32cf99fb6edde75fa4f0bcf9ed277855811
+Status: Downloaded newer image for vieux/sshfs:latest
+Installed plugin vieux/sshfs
+
+
+docker plugin install --grant-all-permissions vieux/sshfs
+
+
+docker plugin ls
+
+ID                  NAME                 DESCRIPTION               ENABLED
+63894843ad0f        vieux/sshfs:latest   sshFS plugin for Docker   true
+
+
+ssh centos@docker-02 "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa"
+
+ssh-copy-id centos@docker-02
+
+ssh centos@docker-02 'sudo mkdir -p /var/local/vol/ssh'
+
+ssh centos@docker-02 'sudo chgrp -R docker /var/local/vol'
+
+ssh centos@docker-02 'sudo chmod -R 0770 /var/local/vol'
+
+
+docker volume create \
+    --driver vieux/sshfs \
+    --name vol_ssh \
+    -o sshcmd=centos@docker-02:/var/local/vol/ssh
+
+docker container run -itd --name test_plugin --mount src=vol_ssh,target=/test alpine
+
+docker container exec -it test_plugin echo 'Hello, World!' > /test/foo.txt
+
+ssh centos@docker-02 ls /var/local/vol/ssh
