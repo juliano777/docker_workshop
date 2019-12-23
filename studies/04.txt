@@ -22,10 +22,10 @@ k29emo6ufxq1        stack_00_web        replicated          5/5                 
 docker stack ps stack_00
 
 ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
-kwqzfx4mv5la        stack_00_web.1      nginx:latest        docker-02.local     Running             Running 2 minutes ago                       
+kwqzfx4mv5la        stack_00_web.1      nginx:latest        ${SRV}.local     Running             Running 2 minutes ago                       
 qis41a99788a        stack_00_web.2      nginx:latest        docker-03.local     Running             Running 2 minutes ago                       
 h416qin58dfo        stack_00_web.3      nginx:latest        docker-01.local     Running             Running 2 minutes ago                       
-12h5br3w7pu4        stack_00_web.4      nginx:latest        docker-02.local     Running             Running 2 minutes ago                       
+12h5br3w7pu4        stack_00_web.4      nginx:latest        ${SRV}.local     Running             Running 2 minutes ago                       
 vdpwz0v0hgky        stack_00_web.5      nginx:latest        docker-01.local     Running             Running 2 minutes ago
 
 docker stack rm stack_00
@@ -63,7 +63,7 @@ docker stack ps stack_visualizer | fgrep web
 ... "no suitable node (scheduling …"
 
 
-docker node update --label-add loc='Narnia' docker-02.local
+docker node update --label-add loc='Narnia' ${SRV}.local
 docker node update --label-add loc='Narnia' docker-03.local
 
 docker stack ps stack_visualizer | fgrep web
@@ -71,7 +71,7 @@ docker stack ps stack_visualizer | fgrep web
 # https://docs.docker.com/engine/reference/commandline/service_create/#specify-service-constraints-constraint
 
 
-
+# DOCKER CONFIG
 
 cat << EOF | docker config create pg_hba - 
 local all all trust
@@ -90,7 +90,9 @@ docker service create --name pglocal \
     juliano777/postgres
 
 
-sudo dnf install -y fuse-sshfs && dnf clean all    
+# DOCKER PLUGIN
+
+sudo dnf install -y fuse-sshfs && sudo dnf clean all
 
 
 docker plugin install vieux/sshfs
@@ -119,24 +121,47 @@ ID                  NAME                 DESCRIPTION               ENABLED
 63894843ad0f        vieux/sshfs:latest   sshFS plugin for Docker   true
 
 
-ssh centos@docker-02 "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa"
 
-ssh-copy-id centos@docker-02
+read -p 'Server (hostname or IP address): ' SRV
 
-ssh centos@docker-02 'sudo mkdir -p /var/local/vol/ssh'
+read -p 'Username: ' USER_SRV
 
-ssh centos@docker-02 'sudo chgrp -R docker /var/local/vol'
+read -sp 'Password: ' PASSWD_SRV
 
-ssh centos@docker-02 'sudo chmod -R 0770 /var/local/vol'
+echo "${PASSWD_SRV}" > secret && chmod 600 secret
 
+unset PASSWD_SRV
+
+ssh ${USER_SRV}@${SRV} "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa"
+
+ssh-copy-id ${USER_SRV}@${SRV}
+
+ssh ${USER_SRV}@${SRV} 'sudo mkdir -p /var/local/vol/ssh'
+
+ssh ${USER_SRV}@${SRV} 'sudo chgrp -R docker /var/local/vol'
+
+ssh ${USER_SRV}@${SRV} 'sudo chmod -R 0770 /var/local/vol'
 
 docker volume create \
     --driver vieux/sshfs \
     --name vol_ssh \
-    -o sshcmd=centos@docker-02:/var/local/vol/ssh
+    -o password=`cat secret` \
+    -o sshcmd=${USER_SRV}@${SRV}:/var/local/vol/ssh
+
+rm -f secret    
 
 docker container run -itd --name test_plugin --mount src=vol_ssh,target=/test alpine
 
-docker container exec -it test_plugin echo 'Hello, World!' > /test/foo.txt
+docker container exec -it test_plugin touch /test/file{0,1,2,3,4}
 
-ssh centos@docker-02 ls /var/local/vol/ssh
+ssh ${USER_SRV}@${SRV} ls /var/local/vol/ssh
+
+ssh ${USER_SRV}@${SRV} ls /var/local/vol/ssh
+file0
+file1
+file2
+file3
+file4
+
+docker container exec -it test_plugin ls /test/
+file0  file1  file2  file3  file4
