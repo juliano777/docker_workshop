@@ -1,0 +1,5 @@
+https://success.docker.com/article/how-do-i-enable-the-remote-api-for-dockerd
+https://docs.docker.com/engine/reference/commandline/dockerd/
+https://docs.docker.com/engine/reference/commandline/cli/
+
+ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375
